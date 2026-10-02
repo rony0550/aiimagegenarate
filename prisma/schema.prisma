@@ -1,0 +1,54 @@
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  avatar       String?
+  credits      Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  generations  Generation[]
+  transactions CreditTransaction[]
+}
+
+model Generation {
+  id        String   @id @default(cuid())
+  userId    String
+  prompt    String
+  style     String
+  ratio     String
+  quality   String
+  imageUrl  String
+  creditsUsed Int    @default(1)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model CreditTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Int      // positive = purchase, negative = usage
+  type        String   // "purchase" | "usage" | "bonus" | "refund"
+  description String?
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
