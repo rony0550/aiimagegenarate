@@ -73,13 +73,13 @@ export async function POST(req: NextRequest) {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create user with 5 free welcome credits
+    // Create user with 30 free welcome credits
     const user = await db.user.create({
       data: {
         name: name || null,
         email,
         passwordHash,
-        credits: 5,
+        credits: 30,
       },
     });
 
@@ -87,9 +87,9 @@ export async function POST(req: NextRequest) {
     await db.creditTransaction.create({
       data: {
         userId: user.id,
-        amount: 5,
+        amount: 30,
         type: "bonus",
-        description: "Welcome bonus — 5 free credits",
+        description: "Welcome bonus — 30 free credits",
       },
     });
 

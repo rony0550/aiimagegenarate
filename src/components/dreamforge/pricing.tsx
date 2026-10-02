@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { motion } from "framer-motion";
-import { Check, Sparkles, Loader2, AlertCircle, Coins } from "lucide-react";
+import { Check, Sparkles, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StaggerGroup, slideUpItem } from "./anim";
 import { useAuth } from "./auth-context";
@@ -25,7 +25,7 @@ const PLANS: Plan[] = [
     tagline: "For exploring AI image generation.",
     priceMonthly: 0,
     credits: 30,
-    cta: "Get 30 Credits",
+    cta: "30 Credits at Signup",
     features: [
       "30 credits (6 images)",
       "5 credits per image",
@@ -70,40 +70,15 @@ const PLANS: Plan[] = [
 ];
 
 export function Pricing() {
-  const { user, refresh } = useAuth();
-  const [purchasing, setPurchasing] = React.useState<string | null>(null);
-  const [success, setSuccess] = React.useState<string | null>(null);
-  const [error, setError] = React.useState<string | null>(null);
+  const { user } = useAuth();
+  const [notice, setNotice] = React.useState<string | null>(null);
 
-  const handlePurchase = async (planId: string) => {
-    setError(null);
-    setSuccess(null);
-    if (!user) {
-      setError("Please sign in first to purchase credits.");
-      return;
-    }
-    setPurchasing(planId);
-    try {
-      const res = await fetch("/api/credits/purchase", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Purchase failed");
-      }
-      setSuccess(
-        `Success! ${data.creditsAdded} credits added. You now have ${data.creditsTotal} credits.`,
-      );
-      // Refresh the auth context so navbar/generator pick up the new balance.
-      await refresh();
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Purchase failed";
-      setError(msg);
-    } finally {
-      setPurchasing(null);
-    }
+  const handlePurchase = (planId: string) => {
+    setNotice(
+      planId === "free"
+        ? "New accounts receive 30 free credits. Paid top-ups are coming soon."
+        : "Payments are coming soon. Your account has not been charged.",
+    );
   };
 
   return (
@@ -142,23 +117,14 @@ export function Pricing() {
           )}
         </motion.div>
 
-        {/* Success / error banners */}
-        {success && (
-          <div className="mx-auto mt-6 flex max-w-xl items-center gap-2 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-            <Check className="h-4 w-4 shrink-0" />
-            <span>{success}</span>
-          </div>
-        )}
-        {error && (
-          <div className="mx-auto mt-6 flex max-w-xl items-center gap-2 rounded-lg border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>{error}</span>
+        {notice && (
+          <div aria-live="polite" className="mx-auto mt-6 max-w-xl rounded-lg border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+            {notice}
           </div>
         )}
 
         <StaggerGroup className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
           {PLANS.map((plan) => {
-            const isPurchasing = purchasing === plan.id;
             return (
               <motion.div
                 key={plan.id}
@@ -168,7 +134,7 @@ export function Pricing() {
                 className={cn(
                   "relative overflow-hidden rounded-2xl border p-6",
                   plan.highlighted
-                    ? "border-violet-400/40 bg-gradient-to-b from-[#251a3d] to-[#13152c] shadow-[0_8px_40px_-12px_rgba(139,92,246,0.4)]"
+                    ? "border-violet-400/40 bg-linear-to-b from-[#251a3d] to-[#13152c] shadow-[0_8px_40px_-12px_rgba(139,92,246,0.4)]"
                     : "border-white/10 bg-[#181a35]",
                 )}
               >
@@ -198,25 +164,14 @@ export function Pricing() {
                 <button
                   type="button"
                   onClick={() => handlePurchase(plan.id)}
-                  disabled={isPurchasing || !user}
                   className={cn(
                     "mt-5 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60",
                     plan.highlighted
-                      ? "bg-gradient-to-r from-violet-600 to-pink-500 text-white hover:opacity-90"
-                      : "border border-white/10 bg-white/[0.03] text-white hover:border-white/20 hover:bg-white/5",
-                    "disabled:cursor-not-allowed disabled:opacity-50",
+                      ? "bg-linear-to-r from-violet-600 to-pink-500 text-white hover:opacity-90"
+                      : "border border-white/10 bg-white/3 text-white hover:border-white/20 hover:bg-white/5",
                   )}
                 >
-                  {isPurchasing ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : !user ? (
-                    "Sign in to buy"
-                  ) : (
-                    plan.cta
-                  )}
+                  {plan.cta}
                 </button>
 
                 <ul className="mt-6 space-y-2.5">
